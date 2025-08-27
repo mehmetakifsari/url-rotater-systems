@@ -50,9 +50,7 @@ import requests
 
 APP_DIR = os.path.dirname(__file__)
 APP_NAME = "URL Rotator"
-APP_ICON_ICO = os.path.join(APP_DIR, "img", "img/favicon.ico")
-APP_ICON_PNG = os.path.join(APP_DIR, "img", "favicon.png")
-APP_ICON = APP_ICON_ICO if os.path.exists(APP_ICON_ICO) else (APP_ICON_PNG if os.path.exists(APP_ICON_PNG) else "")
+APP_ICON = os.path.join(APP_DIR, "img", "favicon.png")
 
 CONFIG_FILE   = os.path.join(APP_DIR, 'config.json')
 GROUP_FILE    = os.path.join(APP_DIR, 'group.json')
@@ -71,9 +69,6 @@ class VPNProvider:
 
 @dataclass
 class Settings:
-    # --- GitHub URL JSON ---
-    github_url_enabled: bool = False
-    github_url_json: str = \"\"
     minutes: int = 1
     use_chrome: bool = True
     use_firefox: bool = False
@@ -280,9 +275,7 @@ def load_all() -> Tuple[Settings, List[ScheduleItem]]:
         scheds.append(ScheduleItem(time_hhmm="10:00", group_name="Gündüz", enabled=True, weekdays=list(range(0,5))))
     if not any(x.group_name=="Gece" for x in scheds):
         scheds.append(ScheduleItem(time_hhmm="22:00", group_name="Gece", enabled=True, weekdays=list(range(0,5))))
-        s.github_url_enabled = self.cb_github_urls.isChecked()
-        s.github_url_json = self.ed_github_json.text().strip()
-        return s, scheds
+    return s, scheds
 
 def save_all(settings: Settings, schedules: List[ScheduleItem]):
     try:
@@ -450,43 +443,24 @@ def save_url_list_from_widget(list_widget: QListWidget):
     except Exception:
         pass
 
-def load_url_list_to_widget(list_widget: QListWidget, make_item_fn, settings: "Settings" = None):
+def load_url_list_to_widget(list_widget: QListWidget, make_item_fn):
     try:
-        # Remote first if enabled
-        if settings and getattr(settings, 'github_url_enabled', False) and getattr(settings, 'github_url_json', '').strip():
-            import requests
-            try:
-                r = requests.get(settings.github_url_json.strip(), timeout=20)
-                r.raise_for_status()
-                data = r.json()
-                items = data.get('items') if isinstance(data, dict) else data
-                if isinstance(items, list):
-                    list_widget.clear()
-                    for obj in items:
-                        u = (obj.get('url') or '').strip()
-                        m = int(obj.get('minutes') or obj.get('seconds') or 1)
-                        g = obj.get('group') or ''
-                        if u:
-                            list_widget.addItem(make_item_fn(u, m, g))
-                    return len(items)
-            except Exception:
-                pass  # fall back to local
-        # Local fallback
         if not os.path.exists(URLLIST_FILE):
             return 0
-        with open(URLLIST_FILE, 'r', encoding='utf-8') as f:
+        with open(URLLIST_FILE, "r", encoding="utf-8") as f:
             arr = json.load(f)
         list_widget.clear()
         for obj in arr or []:
-            u = obj.get('url','').strip()
-            m = int(obj.get('minutes', 1))
-            g = obj.get('group','')
+            u = obj.get("url","").strip()
+            m = int(obj.get("minutes", 1))
+            g = obj.get("group","")
             if u:
                 list_widget.addItem(make_item_fn(u, m, g))
         return len(arr or [])
     except Exception:
         return 0
 
+# ---------- SMTP ----------
 def send_smtp_mail(subject: str, body: str, log_widget: Optional[QTextEdit] = None):
     cfg = load_smtp()
     if not cfg.enabled or not cfg.user or not cfg.password or not cfg.to_addr:
@@ -1132,8 +1106,7 @@ class RotatorWorker(threading.Thread):
                     log_callback=lambda s: self.signals.status.emit(s)
                 )
                 vpn_name = os.path.splitext(os.path.basename(ovpn))[0]
-                self.signals.status.emit("=== VPN başlatılıyor ===")
-                self.signals.status.emit(f"{vpn_name} vpn adresine bağlanıyor")
+                self.signals.status.emit(f"=== VPN başlatılıyor: {vpn_name} ===")
                 ok = False; err_txt = ""
                 try:
                     ok = vpn.connect(ovpn)
@@ -1479,13 +1452,6 @@ class SettingsDialog(QDialog):
         self.cmb_ua_mode = QComboBox(); self.cmb_ua_mode.addItems(["Auto","Manual"]); self.cmb_ua_mode.setCurrentText(settings.ua_mode or "Auto")
         self.ed_user_agent = QLineEdit(settings.user_agent)
 
-        # GitHub URL JSON
-        self.cb_github_urls = QCheckBox(\"GitHub URL listesini kullan (JSON)\")
-        self.cb_github_urls.setChecked(settings.github_url_enabled)
-        self.ed_github_json = QLineEdit(settings.github_url_json)
-        self.ed_github_json.setPlaceholderText(\"https://.../urllist.json\")
-        self.ed_github_json.setEnabled(self.cb_github_urls.isChecked())
-        self.cb_github_urls.toggled.connect(lambda ch: self.ed_github_json.setEnabled(ch))
         # Proxy
         self.cb_proxylist = QCheckBox("Proxy listesi (proxy.json / uzak) aktif"); self.cb_proxylist.setChecked(settings.proxy_enabled)
         self.sp_failover = QSpinBox(); self.sp_failover.setRange(10, 600); self.sp_failover.setValue(int(settings.proxy_failover_secs or 120))
@@ -1542,8 +1508,6 @@ class SettingsDialog(QDialog):
 
         form.addRow("UA modu:", self.cmb_ua_mode)
         form.addRow("User-Agent (manuel):", self.ed_user_agent)
-        form.addRow("", self.cb_github_urls)
-        form.addRow("JSON adresi:", self.ed_github_json)
 
         form.addRow("", self.cb_proxylist)
         form.addRow("Proxy failover (sn):", self.sp_failover)
@@ -1733,7 +1697,7 @@ class MainWindow(QMainWindow):
         self.in_url.returnPressed.connect(self.add_url)
 
         self.refresh_group_completer()
-        load_url_list_to_widget(self.left_list, self._make_item, self.settings)
+        load_url_list_to_widget(self.left_list, self._make_item)
 
         self._notify(f"{APP_NAME} hazır.")
         save_groups(self.groups)
@@ -1844,7 +1808,7 @@ class MainWindow(QMainWindow):
             log_append(self.log, f"Toplu ekleme tamamlandı. {len(rows)} satır işlendi.")
 
     def load_urls_from_file(self):
-        count = load_url_list_to_widget(self.left_list, self._make_item, self.settings)
+        count = load_url_list_to_widget(self.left_list, self._make_item)
         if count > 0:
             log_append(self.log, f"urllist.json yüklendi. {count} kayıt.")
         else:
@@ -2128,10 +2092,8 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
-    if APP_ICON and os.path.exists(APP_ICON):
-        QApplication.setWindowIcon(QIcon(APP_ICON))
     w = MainWindow()
-    if APP_ICON and os.path.exists(APP_ICON):
+    if os.path.exists(APP_ICON):
         w.setWindowIcon(QIcon(APP_ICON))
     w.show()
     sys.exit(app.exec())
