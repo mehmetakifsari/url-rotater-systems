@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "host": "smtp.gmail.com",
+  "port": 465,
+  "user": "musebbihane@gmail.com",
+  "password": "dexswqkbqhvhijhv",
+  "to_addr": "mehmetakifsari53@gmail.com",
+  "use_tls": false,
+  "use_ssl": true
+}

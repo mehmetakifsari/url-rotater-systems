@@ -1,0 +1,72 @@
+{
+  "minutes": 1,
+  "use_chrome": true,
+  "use_firefox": false,
+  "use_edge": false,
+  "use_brave": false,
+  "use_opera": false,
+  "chrome_binary": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "firefox_binary": "",
+  "edge_binary": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+  "brave_binary": "",
+  "opera_binary": "C:\\Users\\Administrator\\AppData\\Local\\Programs\\Opera\\opera.exe",
+  "ua_mode": "Auto",
+  "user_agent": "",
+  "http_proxy": "",
+  "proxy_enabled": false,
+  "proxy_failover_secs": 120,
+  "vpn_provider": "OpenVPN",
+  "vpn_exe_path": "",
+  "minimize_to_tray": true,
+  "window_layout": "Auto",
+  "proxy_source_mode": "Manual",
+  "proxy_type": "HTTP",
+  "proxy_optional_url": "",
+  "vpn_rotate_enabled": false,
+  "openvpn_exe": "C:\\Program Files\\OpenVPN\\bin\\openvpn.exe",
+  "vpn_ovpn_dir": "C:\\Program Files\\OpenVPN\\config",
+  "vpn_username": "vpnbook",
+  "vpn_password": "m34wk9w",
+  "vpn_connect_timeout_sec": 60,
+  "vpn_stop_timeout_sec": 10,
+  "github_url_enabled": true,
+  "github_url_json": "https://github.com/mehmetakifsari/url-rotater-systems/blob/main/new-urllist.json",
+  "_schedules": [
+    {
+      "time_hhmm": "10:00",
+      "group_name": "Gündüz",
+      "vpn_exe_path": "",
+      "enabled": true,
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "use_chrome": null,
+      "use_firefox": null,
+      "use_edge": null,
+      "use_brave": null,
+      "use_opera": null
+    },
+    {
+      "time_hhmm": "22:00",
+      "group_name": "Gece",
+      "vpn_exe_path": "",
+      "enabled": true,
+      "weekdays": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "use_chrome": null,
+      "use_firefox": null,
+      "use_edge": null,
+      "use_brave": null,
+      "use_opera": null
+    }
+  ]
+}
